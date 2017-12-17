@@ -19,6 +19,8 @@ package org.apache.rocketmq.broker.processor;
 import com.alibaba.fastjson.JSON;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -272,12 +274,18 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
         String content = this.brokerController.getTopicConfigManager().encode();
         if (content != null && content.length() > 0) {
             try {
-                response.setBody(content.getBytes(MixAll.DEFAULT_CHARSET));
+                response.setBody(UtilAll.compress(content.getBytes(MixAll.DEFAULT_CHARSET), 5));
             } catch (UnsupportedEncodingException e) {
                 log.error("", e);
 
                 response.setCode(ResponseCode.SYSTEM_ERROR);
                 response.setRemark("UnsupportedEncodingException " + e);
+                return response;
+            } catch (IOException e) {
+                log.error("", e);
+
+                response.setCode(ResponseCode.SYSTEM_ERROR);
+                response.setRemark("compress error " + e);
                 return response;
             }
         } else {
@@ -481,12 +489,17 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
         String content = this.brokerController.getSubscriptionGroupManager().encode();
         if (content != null && content.length() > 0) {
             try {
-                response.setBody(content.getBytes(MixAll.DEFAULT_CHARSET));
+                response.setBody(UtilAll.compress(content.getBytes(MixAll.DEFAULT_CHARSET), 5));
             } catch (UnsupportedEncodingException e) {
                 log.error("", e);
 
                 response.setCode(ResponseCode.SYSTEM_ERROR);
                 response.setRemark("UnsupportedEncodingException " + e);
+                return response;
+            } catch (IOException e) {
+                log.error("compress error", e);
+                response.setCode(ResponseCode.SYSTEM_ERROR);
+                response.setRemark("compress error " + e);
                 return response;
             }
         } else {
