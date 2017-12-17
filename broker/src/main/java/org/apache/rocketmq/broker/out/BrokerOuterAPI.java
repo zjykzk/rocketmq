@@ -16,11 +16,13 @@
  */
 package org.apache.rocketmq.broker.out;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.common.MixAll;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.common.namesrv.RegisterBrokerResult;
 import org.apache.rocketmq.common.namesrv.TopAddressing;
@@ -240,7 +242,14 @@ public class BrokerOuterAPI {
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
-                return TopicConfigSerializeWrapper.decode(response.getBody(), TopicConfigSerializeWrapper.class);
+                try {
+                    byte[] data = UtilAll.uncompress(response.getBody());
+                    return TopicConfigSerializeWrapper.decode(data, TopicConfigSerializeWrapper.class);
+                } catch (IOException e) {
+                    log.error("uncompress error", e);
+                    response.setCode(ResponseCode.SYSTEM_ERROR);
+                    response.setRemark("uncompress subscription error:" + e);
+                }
             }
             default:
                 break;
@@ -291,7 +300,14 @@ public class BrokerOuterAPI {
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
-                return SubscriptionGroupWrapper.decode(response.getBody(), SubscriptionGroupWrapper.class);
+                try {
+                    byte[] data = UtilAll.uncompress(response.getBody());
+                    return SubscriptionGroupWrapper.decode(data, SubscriptionGroupWrapper.class);
+                } catch (IOException e) {
+                    log.error("uncompress subscription data error", e);
+                    response.setCode(ResponseCode.SYSTEM_ERROR);
+                    response.setRemark("uncompress subscription error:" + e);
+                }
             }
             default:
                 break;

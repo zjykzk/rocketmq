@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.client.impl;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -1947,7 +1948,14 @@ public class MQClientAPIImpl {
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
-                return SubscriptionGroupWrapper.decode(response.getBody(), SubscriptionGroupWrapper.class);
+                try {
+                    byte[] data = UtilAll.uncompress(response.getBody());
+                    return SubscriptionGroupWrapper.decode(data, SubscriptionGroupWrapper.class);
+                } catch (IOException e) {
+                    log.error("uncompress subscription data error", e);
+                    response.setCode(ResponseCode.SYSTEM_ERROR);
+                    response.setRemark("uncompress subscription error:" + e);
+                }
             }
             default:
                 break;
@@ -1965,7 +1973,14 @@ public class MQClientAPIImpl {
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
-                return TopicConfigSerializeWrapper.decode(response.getBody(), TopicConfigSerializeWrapper.class);
+                try {
+                    byte[] data = UtilAll.uncompress(response.getBody());
+                    return TopicConfigSerializeWrapper.decode(data, TopicConfigSerializeWrapper.class);
+                } catch (IOException e) {
+                    log.error("uncompress error", e);
+                    response.setCode(ResponseCode.SYSTEM_ERROR);
+                    response.setRemark("uncompress subscription error:" + e);
+                }
             }
             default:
                 break;
