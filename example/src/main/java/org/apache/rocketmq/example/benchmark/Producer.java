@@ -213,7 +213,7 @@ public class Producer {
         return options;
     }
 
-    private static Message buildMessage(final int messageSize, final String topic) throws UnsupportedEncodingException {
+    public static Message buildMessage(final int messageSize, final String topic) throws UnsupportedEncodingException {
         Message msg = new Message();
         msg.setTopic(topic);
 
